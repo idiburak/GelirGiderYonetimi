@@ -1,58 +1,31 @@
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
-import javax.swing.JTabbedPane;
-import javax.swing.JPanel;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.Connection;
 
 public class AdminWindow {
 
 	private JFrame frame;
-	private JButton buttonAddPersonnel;
-
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					javax.swing.UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-					break;
-				}
-			}
-
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-		
-		
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					AdminWindow window = new AdminWindow();
-					window.frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
+	
+	private Connection dbc;
+	public JFrame getFrame() {
+		return frame;
 	}
 
 	/**
 	 * Create the application.
 	 */
-	public AdminWindow() {
+	public AdminWindow(Connection dbc) {
+		this.dbc = dbc;
 		initialize();
 	}
 
@@ -61,15 +34,17 @@ public class AdminWindow {
 	 */
 	
 	
-	private Thread moveLeft,showIn,showOut;
+	private Thread moveLeft;
 	private Thread showPersonnel, hidePersonnel;
 	private Thread showAdmin, hideAdmin;
 	private Thread showDepartment, hideDepartment;
 	private Thread showLimit, hideLimit;
 	private int buttonsLoc=0;
+	private JButton buttonAddPersonnel;
 	private JButton buttonAddAdmin;
 	private JButton buttonAddDepartment;
 	private JButton buttonSpendingLimit;
+	private JButton buttonLogout;
 	private AddPersonPanel app;
 	private Component currentComp;
 	private AddAdminPanel aap;
@@ -83,7 +58,14 @@ public class AdminWindow {
 		frame.getContentPane().setBackground(Variables.Colors.backgroundColor);
 		frame.getContentPane().setLayout(null);
 		
-		
+		buttonLogout = new JButton("");
+		buttonLogout.setBounds(829, 11, 95, 24);
+		buttonLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		buttonLogout.setIcon(Variables.Images.iconLogout);
+		buttonLogout.setFocusPainted(false);
+		buttonLogout.setBorderPainted(false);
+		buttonLogout.setContentAreaFilled(false);
+		frame.getContentPane().add(buttonLogout);
 		
 		buttonAddPersonnel = new JButton("");
 		buttonAddPersonnel.setBounds(150, 150, 300, 100);
@@ -123,17 +105,35 @@ public class AdminWindow {
 		
 		createMouseListeners();
 		
-		app = new AddPersonPanel();
-		app.setBounds(155, 75, 625, 450);
+		app = new AddPersonPanel(dbc);
+		app.setBounds(155, 30, 625, 550);
 		
 		aap = new AddAdminPanel();
-		aap.setBounds(155, 75, 625, 450);
+		aap.setBounds(155, 30, 625, 550);
 		
 		adp = new AddDepartmentPanel();
-		adp.setBounds(155, 75, 625, 450);
+		adp.setBounds(155, 30, 625, 550);
 		
 		alp = new AddLimitPanel();
-		alp.setBounds(155, 75, 625, 450);
+		alp.setBounds(155, 30, 625, 550);
+		
+		buttonLogout.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frame.dispose();
+				EventQueue.invokeLater(new Runnable() {
+					public void run() {
+						try {
+							Main m = new Main();
+							m.getFrame().setVisible(true);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
+			}
+		});
+		
+		
 		
 		frame.setLocationRelativeTo(null);
 	}
@@ -301,12 +301,12 @@ public class AdminWindow {
 			public void actionPerformed(ActionEvent arg0) {
 				if(buttonsLoc == 0){
 					moveButtonsToFirstPos();
-					frame.add(app);
+					frame.getContentPane().add(app);
 					frame.repaint();
 					currentComp = app;
 				}else{
 					frame.remove(currentComp);
-					frame.add(app);
+					frame.getContentPane().add(app);
 					frame.repaint();
 					currentComp = app;
 				}
@@ -340,12 +340,12 @@ public class AdminWindow {
 			public void actionPerformed(ActionEvent arg0) {
 				if(buttonsLoc == 0){
 					moveButtonsToFirstPos();
-					frame.add(aap);
+					frame.getContentPane().add(aap);
 					frame.repaint();
 					currentComp = aap;
 				}else{
 					frame.remove(currentComp);
-					frame.add(aap);
+					frame.getContentPane().add(aap);
 					frame.repaint();
 					currentComp = aap;
 				}
@@ -379,12 +379,12 @@ public class AdminWindow {
 			public void actionPerformed(ActionEvent arg0) {
 				if(buttonsLoc == 0){
 					moveButtonsToFirstPos();
-					frame.add(adp);
+					frame.getContentPane().add(adp);
 					frame.repaint();
 					currentComp = adp;
 				}else{
 					frame.remove(currentComp);
-					frame.add(adp);
+					frame.getContentPane().add(adp);
 					frame.repaint();
 					currentComp = adp;
 				}	
@@ -416,12 +416,12 @@ public class AdminWindow {
 			public void actionPerformed(ActionEvent arg0) {
 				if(buttonsLoc == 0){
 					moveButtonsToFirstPos();
-					frame.add(alp);
+					frame.getContentPane().add(alp);
 					frame.repaint();
 					currentComp = alp;
 				}else{
 					frame.remove(currentComp);
-					frame.add(alp);
+					frame.getContentPane().add(alp);
 					frame.repaint();
 					currentComp = alp;
 				}	

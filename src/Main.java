@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -27,11 +29,15 @@ import java.awt.Cursor;
 public class Main {
 
 	private JFrame frame;
+	public JFrame getFrame() {
+		return frame;
+	}
+	protected static boolean isManager = false;
 	private JButton buttonAdmin;
 	private JButton buttonPersonnel;
-	//private ImageIcon iconAdmin, iconAdminPressed, iconPersonnel, iconPersonnelPressed;
 	private Point buttonAdminLocation,buttonPersonnelLocation;
 	private LoginPanel log;
+	private Connection dbc;
 	/**
 	 * Launch the application.
 	 */
@@ -65,6 +71,7 @@ public class Main {
 	 * Create the application.
 	 */
 	public Main() {
+		dbc = makeConnection();
 		initialize();
 	}
 
@@ -80,11 +87,6 @@ public class Main {
 		frame.setPreferredSize(new Dimension(950, 650));
 		frame.getContentPane().setBackground(new Color(47, 79, 79));
 		frame.getContentPane().setLayout(null);
-		
-		//iconAdmin = new ImageIcon(Main.class.getResource("/Images/Buttons/AdminButton.png"));
-		//iconAdminPressed = new ImageIcon(Main.class.getResource("/Images/Buttons/AdminButtonPressed.png"));
-		//iconPersonnel = new ImageIcon(Main.class.getResource("/Images/Buttons/PersonnelButton.png"));
-		//iconPersonnelPressed = new ImageIcon(Main.class.getResource("/Images/Buttons/PersonnelButtonPressed.png"));
 		
 		buttonAdmin = new JButton("");
 		buttonAdmin.setBounds(342, 235, 240, 60);
@@ -120,7 +122,7 @@ public class Main {
 		panel.setBackground(new Color(47, 79, 79));
 		panel.setIgnoreRepaint(true);
 		
-		log = new LoginPanel();
+		log = new LoginPanel(frame,dbc);
 		log.setEnabled(false);
 		log.destroyPanel();
 		log.setLocation(330, 127);
@@ -145,6 +147,7 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {	
 				buttonAdmin.setIcon(Variables.Images.iconAdminPressed);
 				buttonPersonnel.setIcon(Variables.Images.iconPersonnel);
+				isManager = true;
 				if(buttonAdminLocation.x == buttonAdmin.getLocation().x){
 					moveButtonsToLeft();
 					showLoginPanel();
@@ -156,6 +159,7 @@ public class Main {
 			public void actionPerformed(ActionEvent arg0) {	
 				buttonPersonnel.setIcon(Variables.Images.iconPersonnelPressed);
 				buttonAdmin.setIcon(Variables.Images.iconAdmin);
+				isManager = false;
 				if(buttonPersonnelLocation.x == buttonPersonnel.getLocation().x){
 					moveButtonsToLeft();
 					showLoginPanel();
@@ -266,5 +270,19 @@ public class Main {
 			
 		};
 		closeLogin.start();
+	}
+	
+	public static Connection makeConnection() {
+		Connection c = null;
+		try {
+			Class.forName("org.postgresql.Driver");
+			c = DriverManager.getConnection("jdbc:postgresql://localhost:5434/gelirGider", "postgres", "12345");
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return c;
 	}
 }

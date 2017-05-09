@@ -1,20 +1,30 @@
 import javax.swing.JPanel;
 import java.awt.SystemColor;
 import java.awt.Dimension;
+import java.awt.EventQueue;
+
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.ImageIcon;
 import java.awt.Color;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.awt.event.ActionEvent;
 import java.awt.Cursor;
 import javax.swing.SwingConstants;
+import javax.swing.plaf.OptionPaneUI;
+
 import java.awt.Insets;
 import javax.swing.JTextField;
 import javax.swing.JPasswordField;
 import java.awt.Font;
+import java.awt.Frame;
 
 public class LoginPanel extends JPanel {
 
@@ -22,11 +32,13 @@ public class LoginPanel extends JPanel {
 	private JTextField textFieldUserName;
 	private JPasswordField textFieldPassword;
 	private JLabel labelLogo;
+	private Connection dbc;
 
 	/**
 	 * Create the panel.
 	 */
-	public LoginPanel() {
+	public LoginPanel(Frame m, Connection dbc) {
+		this.dbc = dbc;
 		setOpaque(false);
 		setPreferredSize(new Dimension(250,300));
 		setLayout(null);
@@ -93,6 +105,62 @@ public class LoginPanel extends JPanel {
 			}
 		});
 		
+		buttonLogin.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				m.dispose();
+						try {
+							AdminWindow aw = new AdminWindow(dbc);
+							aw.getFrame().setVisible(true);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+				
+				
+				/*
+				String[] result = checkInput();
+				if(result!=null){
+					m.dispose();
+					switch (result[1]){
+						case "admin" : {
+							EventQueue.invokeLater(new Runnable() {
+								public void run() {
+									try {
+										AdminWindow aw = new AdminWindow(dbc);
+										aw.getFrame().setVisible(true);
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								}
+							});
+							break;
+						}
+						case "yonetici":{
+							EventQueue.invokeLater(new Runnable() {
+								public void run() {
+									try {
+										ManagerWindow mw = new ManagerWindow();
+										mw.getFrame().setVisible(true);
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								}
+							});
+							break;
+						}
+						case "personel":{
+							break;
+						}
+						case "muhasebeci":{
+							break;
+						}
+					}
+				}else{
+					JOptionPane.showMessageDialog(m, "Girilen Bilgileri Kontrol Edin!","Hata",JOptionPane.ERROR_MESSAGE);
+				}
+				*/
+			}
+		});
+		
 		
 		createPanel();
 	}
@@ -107,5 +175,36 @@ public class LoginPanel extends JPanel {
 	
 	public void destroyPanel(){
 		removeAll();
+	}
+	
+	public String[] checkInput(){
+		String username = textFieldUserName.getText();
+		String password = textFieldPassword.getText();
+
+		try {
+			String sql = "SELECT password,position FROM personnel WHERE user_name = ? ";
+			PreparedStatement ps = dbc.prepareStatement(sql);
+			ps.setString(1, username);
+			ResultSet rs = ps.executeQuery();
+			if(rs.next()){
+				String passDb = rs.getString("password");
+				String pos = rs.getString("position");
+				if(password.equals(passDb)){
+					String[] result = {username,pos};
+					return result;
+				}
+				return null;
+			}else{
+				//System.out.println("kullanici yok");
+				return null;
+			}
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 }
