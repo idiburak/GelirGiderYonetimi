@@ -2,12 +2,15 @@ import javax.swing.JPanel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import java.awt.Font;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
 
 import javax.swing.SwingConstants;
 import javax.swing.JScrollPane;
@@ -19,6 +22,8 @@ import com.toedter.calendar.JDateChooser;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.FlowLayout;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class AddPersonPanel extends JPanel {
 	private JTextField textFieldName;
@@ -37,6 +42,7 @@ public class AddPersonPanel extends JPanel {
 	private JTextField textFieldPassword;
 	private JLabel lblifre;
 	private JDateChooser dateChooser;
+	private JComboBox<String> comboBoxPosition;
 
 	/**
 	 * Create the panel.
@@ -190,8 +196,79 @@ public class AddPersonPanel extends JPanel {
 		dateChooser.setDateFormatString("dd.MMMM.yyyy");
 		dateChooser.setBounds(439, 137, 176, 24);
 		add(dateChooser);
+		
+		JLabel lblPozisyon = new JLabel("Pozisyon");
+		lblPozisyon.setForeground(Color.WHITE);
+		lblPozisyon.setFont(new Font("Ubuntu", Font.PLAIN, 14));
+		lblPozisyon.setBounds(10, 244, 110, 24);
+		add(lblPozisyon);
+		
+		comboBoxPosition = new JComboBox<String>();
+		comboBoxPosition.setModel(new DefaultComboBoxModel<String>(new String[] {"Personel", "Y\u00F6netici"}));
+		comboBoxPosition.setFont(new Font("Ubuntu", Font.PLAIN, 14));
+		comboBoxPosition.setBounds(130, 244, 175, 24);
+		add(comboBoxPosition);
+		
+		JButton btnClear = new JButton("TEM\u0130ZLE");
+		btnClear.setBounds(385, 244, 110, 23);
+		add(btnClear);
+		
+		btnAdd.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int reply = JOptionPane.showConfirmDialog(null, "Personel Eklenecektir Onaylýyor Musunuz?", "Onay", JOptionPane.YES_NO_OPTION);
+		        if (reply == JOptionPane.YES_OPTION) {
+		        	try{
+		        		String sql = "INSERT INTO personnel (user_name,password,name,surname,tc_no,birthdate,sex,email,phone,position,dep_id)" + 
+										"VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+						PreparedStatement preparedStatement = dbc.prepareStatement(sql);
+						preparedStatement.setString(1, textFieldUsername.getText());
+						preparedStatement.setString(2, textFieldPassword.getText());
+						preparedStatement.setString(3, textFieldName.getText());
+						preparedStatement.setString(4, textFieldSurname.getText());
+						preparedStatement.setString(5, textFieldTcNo.getText());
+						preparedStatement.setDate(6, new java.sql.Date(dateChooser.getDate().getTime()));
+						preparedStatement.setString(7, comboBoxSex.getSelectedItem().toString());
+						preparedStatement.setString(8, textFieldMail.getText());
+						preparedStatement.setString(9, textFieldPhone.getText());
+						preparedStatement.setString(10, comboBoxPosition.getSelectedItem().toString());
+						preparedStatement.setInt(11, comboBoxDepartment.getSelectedIndex()+ 1);
+						preparedStatement .executeUpdate();
+						
+						if(preparedStatement.getWarnings() != null){
+							throw new Exception(preparedStatement.getWarnings().getMessage());
+						}
+						JOptionPane.showMessageDialog(null, "Personel baþarý ile eklendi.", "Onay", JOptionPane.INFORMATION_MESSAGE);
+						
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(null, ex.getMessage(), "HATA", JOptionPane.ERROR_MESSAGE);
+					}
+		        }
+		        else {
+		           
+		        }
+			}
+		});
+		
+		
 		updateDepartmentTypes();
 	}
+	
+	private void clearPage(){
+		textFieldUsername.setText("");
+		textFieldPassword.setText("");
+		textFieldName.setText("");
+		textFieldSurname.setText("");
+		textFieldMail.setText("");
+		textFieldPhone.setText("");
+		textFieldTcNo.setText("");
+		dateChooser.setDate(new Date());
+		comboBoxDepartment.setSelectedIndex(0);
+		comboBoxPosition.setSelectedIndex(0);
+		comboBoxSex.setSelectedIndex(0);
+		
+		
+	}
+	
 	
 	public void updateDepartmentTypes(){
 		try {

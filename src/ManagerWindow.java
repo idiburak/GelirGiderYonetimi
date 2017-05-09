@@ -32,6 +32,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 import com.toedter.calendar.JDateChooser;
 import javax.swing.JTextField;
@@ -48,6 +50,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.JTabbedPane;
 
 public class ManagerWindow {
 
@@ -142,7 +145,7 @@ public class ManagerWindow {
 		String manInfo = "Adý\t: " + userInfo[0] + "\nSoyadý\t: " + userInfo[1] + 
 						"\nEmail\t: " + userInfo[2] + "\nTelefon\t: " + userInfo[3];
 		String depInfo = "Departman\t: " + departmentInfo[0] + "\nYönetici\t: " + departmentInfo[2] + 
-							"\nHarcama Limiti : " + departmentInfo[1] + "\nKalan Limit\t: k limit" + "\n\n";
+							"\nHarcama Limiti : " + departmentInfo[1] + "\nKalan Limit\t: " + calculateLimitLeft();
 		
 		lblDepartmanBilgileri = new JLabel("Departman Bilgileri");
 		lblDepartmanBilgileri.setHorizontalAlignment(SwingConstants.CENTER);
@@ -183,16 +186,6 @@ public class ManagerWindow {
 		lblAddSpending.setBounds(10, 11, 604, 80);
 		frame.getContentPane().add(lblAddSpending);
 		
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setBounds(10, 102, 604, 300);
-		frame.getContentPane().add(scrollPane);
-		
-		table = new JTable();
-		setTableDefault();
-		updateTable();
-		scrollPane.setViewportView(table);
 		
 		buttonApply = new JButton("");
 		buttonApply.setFocusPainted(false);
@@ -220,13 +213,24 @@ public class ManagerWindow {
 		textPaneDetail.setBounds(10, 413, 498, 187);
 		frame.getContentPane().add(textPaneDetail);
 		
-		NumberFormat format = DecimalFormat.getInstance();
-		NumberFormatter formatter = new NumberFormatter(format);
-		formatter.setValueClass(Integer.class);
-	    formatter.setMinimum(0);
-	    formatter.setMaximum(10000);
-	    formatter.setAllowsInvalid(false);
-	    formatter.setCommitsOnValidEdit(true);
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.setBounds(10, 102, 604, 295);
+		frame.getContentPane().add(tabbedPane);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		tabbedPane.addTab("Onay Bekleyen", null, scrollPane, null);
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		
+		JScrollPane scrollPane2 = new JScrollPane();
+		tabbedPane.addTab("Onaylanmýþ", null, scrollPane2, null);
+		scrollPane2.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane2.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		
+		table = new JTable();
+		setTableDefault();
+		updateTable();
+		scrollPane.setViewportView(table);
 		
 		
 	    table.addMouseListener(new MouseAdapter() {
@@ -256,20 +260,24 @@ public class ManagerWindow {
 				}
 			}
 		});
+		
+		NumberFormat format = DecimalFormat.getInstance();
+		NumberFormatter formatter = new NumberFormatter(format);
+		formatter.setValueClass(Integer.class);
+	    formatter.setMinimum(0);
+	    formatter.setMaximum(10000);
+	    formatter.setAllowsInvalid(false);
+	    formatter.setCommitsOnValidEdit(true);
 	    
 	    buttonLogout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				frame.dispose();
-				EventQueue.invokeLater(new Runnable() {
-					public void run() {
-						try {
-							Main m = new Main();
-							m.getFrame().setVisible(true);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				});
+				try {
+					Main m = new Main();
+					m.getFrame().setVisible(true);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
 			}
 		});
 	
@@ -303,13 +311,30 @@ public class ManagerWindow {
 		return null;
 	}
 	
+	private int getUserDep(){
+		try {
+			int userDep = 0;
+			String sql = "SELECT dep_id FROM personnel WHERE user_name = ? ";
+			PreparedStatement ps = dbc.prepareStatement(sql);
+			ps.setString(1, username);
+			ResultSet rs = ps.executeQuery();
+			if(rs.next()){
+				userDep = rs.getInt("dep_id");
+			}
+			return userDep;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
 	
 	private String[] getDepInfo(String dep){
 		try {
 			String depInfo[] = new String[4];
-			String sql = "SELECT dep_name, dep_limit, name, surname FROM personnel p, department d WHERE user_name = ? AND d.dep_id = p.dep_id";
+			String sql = "SELECT dep_name, dep_limit, name, surname FROM personnel p, department d"
+					+ " WHERE p.position = 'yonetici' AND d.dep_id = ? AND d.dep_id = p.dep_id ";
 			PreparedStatement ps = dbc.prepareStatement(sql);
-			ps.setString(1, username);
+			ps.setInt(1, getUserDep());
 			ResultSet rs = ps.executeQuery();
 			if(rs.next()){
 				depInfo[0] = rs.getString("dep_name");
@@ -322,6 +347,29 @@ public class ManagerWindow {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	private int calculateLimitLeft(){
+		try {
+			Date d = new Date();
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(d);
+			int month = cal.get(Calendar.MONTH) + 1;
+			Statement st = dbc.createStatement();
+			String sql = "SELECT sum(s_amount),dep_limit FROM spending s, department d  "
+					+ "WHERE d.dep_id = "+ getUserDep() +" AND d.dep_id = s.dep_id AND EXTRACT(month FROM \"s_date\") = " + month + " GROUP BY d.dep_id";
+			ResultSet rs = st.executeQuery(sql);
+			int num = 0,lim = 0;
+			while (rs.next()) {
+				num = rs.getInt(1);
+				lim = rs.getInt(2);
+			}
+			return lim - num;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
 	}
 	
 	private void updateTable() {

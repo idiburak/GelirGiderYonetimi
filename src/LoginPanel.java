@@ -108,13 +108,14 @@ public class LoginPanel extends JPanel {
 		buttonLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				m.dispose();
+				
 						try {
 							AdminWindow aw = new AdminWindow(dbc);
 							aw.getFrame().setVisible(true);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
-				
+			
 				
 				/*
 				String[] result = checkInput();

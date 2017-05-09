@@ -105,8 +105,7 @@ public class AdminWindow {
 		
 		createMouseListeners();
 		
-		app = new AddPersonPanel(dbc);
-		app.setBounds(155, 30, 625, 550);
+		
 		
 		aap = new AddAdminPanel();
 		aap.setBounds(155, 30, 625, 550);
@@ -120,16 +119,12 @@ public class AdminWindow {
 		buttonLogout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				frame.dispose();
-				EventQueue.invokeLater(new Runnable() {
-					public void run() {
-						try {
-							Main m = new Main();
-							m.getFrame().setVisible(true);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				});
+				try {
+					Main m = new Main();
+					m.getFrame().setVisible(true);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
 			}
 		});
 		
@@ -300,13 +295,19 @@ public class AdminWindow {
 		buttonAddPersonnel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if(buttonsLoc == 0){
+					app = new AddPersonPanel(dbc);
+					app.setBounds(155, 30, 625, 550);
 					moveButtonsToFirstPos();
 					frame.getContentPane().add(app);
+					app.validate();
 					frame.repaint();
 					currentComp = app;
 				}else{
+					app = new AddPersonPanel(dbc);
+					app.setBounds(155, 30, 625, 550);
 					frame.remove(currentComp);
 					frame.getContentPane().add(app);
+					app.validate();
 					frame.repaint();
 					currentComp = app;
 				}
